@@ -1,0 +1,45 @@
+body {
+    background: #fefefe;
+    color: #272727;
+}
+
+.body {
+    padding: 20px;
+}
+
+.btn-primary {
+    background: #21214c;
+    border: 1px solid #21214c;
+}
+
+.btn-primary:hover {
+    background: #181938;
+    border: 1px solid #181938;
+}
+
+a {
+    color: #6c6d7b;
+}
+a:hover {
+    color: #181938;
+}
+
+.form-group input:focus{
+    outline: none !important;
+    border: 1px solid #fdd142;
+    box-shadow: 0 0 10px #fdd142;
+}
+
+.form-control {
+    border: 1px solid #fdd142;
+}
+
+.navbar-brand {
+    font-size: 25px;
+    font-weight: 900;
+    color: #181938 !important;
+}
+
+.nav-link:hover{
+    color: #21214c !important;
+}
