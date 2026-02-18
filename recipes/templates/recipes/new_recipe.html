@@ -1,0 +1,76 @@
+{% extends "recipes/layout.html" %}
+
+{% block body %}
+
+    <h2>New recipe</h2>
+
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form action="{% url 'new_recipe' %}" method="post">
+        {% csrf_token %}
+        <!-- Title -->
+        <div class="form-group">
+            <label for="title" class="form-label">Title</label>
+            <input autofocus required id="title" class="form-control" type="text" name="title">
+        </div>
+        <!-- Categories -->
+        <div class="form-group">
+            <label for="categories" class="form-label">Categories</label>
+            <select id="categories" class="form-select" name="categories" multiple>
+                {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <!-- Ingredients -->
+        <div class="form-group mb-3">
+            <label>Ingredients</label>
+            <div id="ingredients-list"></div>
+            <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="addIngredient()">+ Add ingredient</button>
+            <template id="ingredient-template">
+            <div class="ingredient-row d-flex align-items-center mb-2">
+                <input name="ingredient_name" class="form-control" placeholder="Ingredient" required>
+                <input name="ingredient_qty"  class="form-control" placeholder="Quantity (e.g., 2 cups)">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()">✕</button>
+            </div>
+            </template>
+        </div>
+        <!-- Preparation -->
+        <div class="form-group mb-3">
+            <label for="preparation">Preparation</label>
+            <textarea id="preparation" name="preparation" class="form-control" rows="5" required></textarea>
+        </div>
+        <!-- Notes -->
+        <div class="form-group mb-4">
+            <label for="notes">Notes (optional)</label>
+            <textarea id="notes" name="notes" class="form-control" rows="3"></textarea>
+        </div>
+        <!-- Save -->
+        <input class="btn btn-primary" type="submit" value="Save">
+    </form>
+
+    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
+    <script>
+        new TomSelect("#categories", {
+            create: true,
+            persist: false,
+            highlight: true,
+            plugins: ['remove_button'],
+        });
+    </script>
+    <script>
+        function addIngredient() {
+        const tpl = document.getElementById('ingredient-template').content.cloneNode(true);
+        document.getElementById('ingredients-list').appendChild(tpl);
+        }
+        // start with one row
+        document.addEventListener('DOMContentLoaded', addIngredient);
+    </script>
+
+{% endblock %}

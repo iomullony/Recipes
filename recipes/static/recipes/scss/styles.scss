@@ -1,0 +1,13 @@
+/* === Theme overrides FIRST === */
+
+$primary: #21214c;
+$body-bg: #fefefe;
+$body-color: #272727;
+$link-color: #6c6d7b;
+$link-hover-color: #181938;
+$input-border-color: #fdd142;
+$input-focus-border-color: #fdd142;
+$input-focus-box-shadow: 0 0 0 0.2rem #fdd14240;
+
+/* === Import Bootstrap === */
+@import "../../../../node_modules/bootstrap/scss/bootstrap";

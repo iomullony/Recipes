@@ -1,0 +1,38 @@
+.body {
+    padding: 20px;
+}
+
+.form-select {
+    border-color: #fdd142;
+}
+
+.form-select:focus {
+    border-color: #fdd142;
+    box-shadow: 0 0 0 0.2rem rgba(253, 209, 66, 0.25);
+}
+
+.ts-wrapper.form-select .ts-control {
+    border-color: #fdd142;
+    border-radius: 0.25rem;
+}
+
+.ts-wrapper.form-select .ts-control:focus,
+.ts-wrapper.form-select .ts-control.focus {
+    border-color: #fdd142;
+    box-shadow: 0 0 0 0.2rem rgba(253, 209, 66, 0.25);
+}
+
+.ts-wrapper.form-select.single .ts-control {
+    border-color: #fdd142;
+    border-radius: 0.25rem;
+}
+
+.ts-wrapper.form-select.multi .ts-control {
+    border-color: #fdd142;
+    border-radius: 0.25rem;
+}
+
+.ingredient-row input {
+    margin-right: 10px;
+
+}

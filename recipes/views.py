@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Exists, OuterRef, Count
 
-from .models import User
+from .models import User, Category, Recipe, Ingredient, RecipeIngredient
 
 
 def index(request):
@@ -64,3 +64,82 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "recipes/register.html")
+    
+
+@login_required
+def new_recipe(request):
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        preparation = request.POST.get("preparation", "").strip()
+        notes = request.POST.get("notes", "").strip()
+        categories = request.POST.getlist('categories')
+        ingredient_names = request.POST.getlist('ingredient_name')
+        ingredient_quantities = request.POST.getlist('ingredient_qty')
+
+        # Validate required fields - ensure they're not just whitespace
+        if not title or not title.strip():
+            categories = Category.objects.all()
+            return render(request, "recipes/new_recipe.html", {
+                "categories": categories,
+                "error": "Title is required."
+            })
+        
+        if not preparation or not preparation.strip():
+            categories = Category.objects.all()
+            return render(request, "recipes/new_recipe.html", {
+                "categories": categories,
+                "error": "Preparation instructions are required."
+            })
+
+        # Create the recipe
+        recipe = Recipe.objects.create(
+            user=request.user,
+            title=title,
+            preparation=preparation,
+            notes=notes
+        )
+
+        for value in categories:
+            if not value.strip():
+                continue
+            if value.isdigit():
+                try:
+                    category = Category.objects.get(id=value)
+                    recipe.categories.add(category)
+                except Category.DoesNotExist:
+                    pass
+            else:
+                # New category created via Tom Select
+                category, created = Category.objects.get_or_create(name=value.strip())
+                recipe.categories.add(category)
+
+        # Handle ingredients
+        # Match ingredient names with their quantities by index
+        for i, ingredient_name in enumerate(ingredient_names):
+            ingredient_name = ingredient_name.strip()
+            if not ingredient_name:
+                continue
+            
+            # Get or create the ingredient
+            ingredient, created = Ingredient.objects.get_or_create(name=ingredient_name)
+            
+            # Get quantity (if provided)
+            quantity = ""
+            if i < len(ingredient_quantities):
+                quantity = ingredient_quantities[i].strip()
+            
+            # Create RecipeIngredient relationship
+            RecipeIngredient.objects.create(
+                recipe=recipe,
+                ingredient=ingredient,
+                quantity=quantity
+            )
+
+        # Redirect to recipe detail page or index
+        return HttpResponseRedirect(reverse("index"))
+    else:
+        # GET request - show the form
+        categories = Category.objects.all()
+        return render(request, "recipes/new_recipe.html", {
+            "categories": categories
+        })

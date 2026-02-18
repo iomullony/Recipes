@@ -5,8 +5,8 @@
     <head>
         <title>{% block title %}WoNiNi{% endblock %}</title>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-        <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"> -->
-        <link href="{% static 'recipes/styles.css' %}" rel="stylesheet">
+        <link href="{% static 'recipes/css/styles.css' %}" rel="stylesheet">
+        <link href="{% static 'recipes/css/override.css' %}" rel="stylesheet">
     </head>
     <body>
 
@@ -27,7 +27,7 @@
                     <!-- <li class="nav-item"><a class="nav-link" href="#">Favourites</a></li> -->
                     <li class="nav-item"><a class="nav-link" href="#">Planner</a></li>
                     <li class="nav-item"><a class="nav-link" href="#">Shopping</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Following</a></li>
+                    <!-- <li class="nav-item"><a class="nav-link" href="#">Following</a></li> -->
                     <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Log Out</a></li>
                 {% else %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Log In</a></li>
