@@ -2,13 +2,13 @@
     padding: 20px;
 }
 
-.form-select {
-    border-color: #fdd142;
+.navbar {
+    background-color: #fdd142;
 }
 
-.form-select:focus {
-    border-color: #fdd142;
-    box-shadow: 0 0 0 0.2rem rgba(253, 209, 66, 0.25);
+.navbar-brand {
+    color: #21214c !important;
+    font-weight: 900;
 }
 
 .ts-wrapper.form-select .ts-control {
@@ -19,7 +19,7 @@
 .ts-wrapper.form-select .ts-control:focus,
 .ts-wrapper.form-select .ts-control.focus {
     border-color: #fdd142;
-    box-shadow: 0 0 0 0.2rem rgba(253, 209, 66, 0.25);
+    box-shadow: 0 0 0 0.2rem #fdd14240;
 }
 
 .ts-wrapper.form-select.single .ts-control {
@@ -32,7 +32,53 @@
     border-radius: 0.25rem;
 }
 
-.ingredient-row input {
-    margin-right: 10px;
+.ingredient-row {
+    gap: 8px;
+    flex-wrap: wrap;
+}
 
+.ingredient-row .qty-unit { 
+    gap: 8px; 
+    flex-wrap: nowrap; 
+}
+
+.ingredient-row .qty-input { 
+    max-width: 120px; 
+    border-radius: .25rem; 
+}
+
+.ingredient-row .ingredient-unit { 
+    min-width: 120px; 
+}
+
+.ingredient-row .ts-wrapper { 
+    min-width: 120px; 
+    flex: 0 0 120px; 
+}
+
+.ingredient-row .ts-control { 
+    min-height: 38px; 
+    border-radius: .25rem; 
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.ingredient-row .ts-control.dropdown-active {
+    border-radius: .25rem;          /* keep rounded when open */
+    border-color: #fdd142;
+    box-shadow: 0 0 0 0.2rem #fdd14240;
+}
+
+.ingredient-row .ts-control .item {
+    margin: 0;
+}
+
+.ingredient-row .ts-control input {
+    flex: 1 1 auto;
+    min-width: 40px;
+    padding: 0;
+    margin: 0;
+    height: 1.2em;
 }

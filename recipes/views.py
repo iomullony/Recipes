@@ -5,10 +5,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Exists, OuterRef, Count
+from django.db.models import Exists, OuterRef, Count, Q
 
 from .models import User, Category, Recipe, Ingredient, RecipeIngredient
 
+units = ['g', 'kg', 'mL', 'L', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'unit(s)']
 
 def index(request):
     return render(request, "recipes/index.html")
@@ -75,12 +76,14 @@ def new_recipe(request):
         categories = request.POST.getlist('categories')
         ingredient_names = request.POST.getlist('ingredient_name')
         ingredient_quantities = request.POST.getlist('ingredient_qty')
+        ingredient_units = request.POST.getlist('ingredient_unit')
 
         # Validate required fields - ensure they're not just whitespace
         if not title or not title.strip():
             categories = Category.objects.all()
             return render(request, "recipes/new_recipe.html", {
                 "categories": categories,
+                "units": units,
                 "error": "Title is required."
             })
         
@@ -88,6 +91,7 @@ def new_recipe(request):
             categories = Category.objects.all()
             return render(request, "recipes/new_recipe.html", {
                 "categories": categories,
+                "units": units,
                 "error": "Preparation instructions are required."
             })
 
@@ -123,10 +127,14 @@ def new_recipe(request):
             # Get or create the ingredient
             ingredient, created = Ingredient.objects.get_or_create(name=ingredient_name)
             
-            # Get quantity (if provided)
+            # Build quantity string: number + unit (e.g. "2 cups", "100 g")
             quantity = ""
-            if i < len(ingredient_quantities):
-                quantity = ingredient_quantities[i].strip()
+            qty_val = ingredient_quantities[i].strip() if i < len(ingredient_quantities) else ""
+            unit_val = ingredient_units[i].strip() if i < len(ingredient_units) else ""
+            if qty_val:
+                quantity = qty_val
+                if unit_val:
+                    quantity = f"{qty_val} {unit_val}"
             
             # Create RecipeIngredient relationship
             RecipeIngredient.objects.create(
@@ -141,5 +149,6 @@ def new_recipe(request):
         # GET request - show the form
         categories = Category.objects.all()
         return render(request, "recipes/new_recipe.html", {
-            "categories": categories
+            "categories": categories,
+            "units": units,
         })

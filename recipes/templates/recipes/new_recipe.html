@@ -33,10 +33,17 @@
             <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="addIngredient()">+ Add ingredient</button>
             <template id="ingredient-template">
             <div class="ingredient-row d-flex align-items-center mb-2">
-                <input name="ingredient_name" class="form-control" placeholder="Ingredient" required>
-                <input name="ingredient_qty"  class="form-control" placeholder="Quantity (e.g., 2 cups)">
-                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()">✕</button>
-            </div>
+                <input name="ingredient_name" class="form-control me-2" placeholder="Ingredient" required style="max-width: 300px;" autocomplete="off">
+                <div class="qty-unit d-flex align-items-center me-2">
+                    <input type="number" name="ingredient_qty" class="form-control qty-input" placeholder="Qty" min="0" step="any" aria-label="Quantity" autocomplete="off">
+                    <select name="ingredient_unit" class="form-select ingredient-unit" aria-label="Unit">
+                    {% for unit in units %}
+                        <option value="{{ unit }}">{{ unit }}</option>
+                    {% endfor %}
+                    </select>
+                </div>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()">&times;</button>
+            </div>          
             </template>
         </div>
         <!-- Preparation -->
@@ -57,20 +64,34 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 
     <script>
-        new TomSelect("#categories", {
+        const unitSelectOptions = {
+            persist: false,
+            highlight: true,
+            placeholder: 'Unit'
+        };
+
+        function enhanceUnitSelect(selectEl) {
+            // Prevent double-initialization when cloning
+            if (selectEl.tomselect) return;
+            new TomSelect(selectEl, unitSelectOptions);
+        }
+
+        function addIngredient() {
+            const tpl = document.getElementById('ingredient-template').content.cloneNode(true);
+            const row = tpl.querySelector('.ingredient-row');
+            const unitSelect = tpl.querySelector('.ingredient-unit');
+            document.getElementById('ingredients-list').appendChild(tpl);
+            enhanceUnitSelect(document.getElementById('ingredients-list').lastElementChild.querySelector('.ingredient-unit'));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new TomSelect("#categories", {
             create: true,
             persist: false,
             highlight: true,
             plugins: ['remove_button'],
+            });
+            addIngredient(); // start with one row
         });
     </script>
-    <script>
-        function addIngredient() {
-        const tpl = document.getElementById('ingredient-template').content.cloneNode(true);
-        document.getElementById('ingredients-list').appendChild(tpl);
-        }
-        // start with one row
-        document.addEventListener('DOMContentLoaded', addIngredient);
-    </script>
-
 {% endblock %}
