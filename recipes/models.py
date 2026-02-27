@@ -21,6 +21,7 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField("Ingredient", through="RecipeIngredient", related_name="recipes")
     preparation = models.TextField()
     notes = models.TextField(blank=True)
+    image = models.ImageField(upload_to='recipes/', null=True, blank=True)
 
 
 class RecipeIngredient(models.Model):

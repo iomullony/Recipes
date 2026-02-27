@@ -1,5 +1,8 @@
+/* General */
 .body {
-    padding: 20px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-inline: clamp(20px, 8vw, 360px); /* For scaling */
 }
 
 .navbar {
@@ -32,6 +35,7 @@
     border-radius: 0.25rem;
 }
 
+/* New recipe */
 .ingredient-row {
     gap: 8px;
     flex-wrap: wrap;
@@ -66,7 +70,7 @@
 }
 
 .ingredient-row .ts-control.dropdown-active {
-    border-radius: .25rem;          /* keep rounded when open */
+    border-radius: .25rem;
     border-color: #fdd142;
     box-shadow: 0 0 0 0.2rem #fdd14240;
 }
@@ -81,4 +85,111 @@
     padding: 0;
     margin: 0;
     height: 1.2em;
+}
+
+.img-area {
+	position: relative;
+	width: 100%;
+	max-width: 400px;
+	height: 230px;
+	background: var(--grey);
+	margin-bottom: 30px;
+    border-radius: .25rem; 
+	overflow: hidden;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	border: 1px solid #fdd142;
+	color: #21214c
+}
+
+.img-area .icon {
+	font-size: 100px;
+	color: #21214c
+}
+
+.img-area img {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center;
+	z-index: 100;
+}
+
+.img-area::before {
+	content: attr(data-img);
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, .5);
+	color: #fff;
+	font-weight: 500;
+	text-align: center;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	pointer-events: none;
+	opacity: 0;
+	transition: all .3s ease;
+	z-index: 200;
+}
+
+.img-area.active:hover::before {
+	opacity: 1;
+}
+
+.img-area:focus,
+.img-area:focus-visible,
+.img-area:active {
+	outline: none;
+    border-color: #fdd142;
+    box-shadow: 0 0 0 0.2rem #fdd14240;
+}
+
+/* Recipes list */
+.recipe-listings {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.recipe-item {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    height: 200px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.recipe-image {
+    width: 200px;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.recipe-image img {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+}
+
+.recipe-details {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.image {
+    max-width: 400px;
+    max-height: 300px;
 }

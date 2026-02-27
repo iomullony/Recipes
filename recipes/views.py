@@ -12,7 +12,9 @@ from .models import User, Category, Recipe, Ingredient, RecipeIngredient
 units = ['g', 'kg', 'mL', 'L', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'unit(s)']
 
 def index(request):
-    return render(request, "recipes/index.html")
+    return render(request, "recipes/index.html", {
+        "recipes": Recipe.objects.all()
+    })
 
 
 def login_view(request):
@@ -77,6 +79,8 @@ def new_recipe(request):
         ingredient_names = request.POST.getlist('ingredient_name')
         ingredient_quantities = request.POST.getlist('ingredient_qty')
         ingredient_units = request.POST.getlist('ingredient_unit')
+        photo = request.FILES.get("photo")
+        max_image_bytes = 2 * 1024 * 1024  # 2 MB limit to match front-end check
 
         # Validate required fields - ensure they're not just whitespace
         if not title or not title.strip():
@@ -95,12 +99,22 @@ def new_recipe(request):
                 "error": "Preparation instructions are required."
             })
 
+        # Validate image size if provided
+        if photo and photo.size > max_image_bytes:
+            categories = Category.objects.all()
+            return render(request, "recipes/new_recipe.html", {
+                "categories": categories,
+                "units": units,
+                "error": "Image must be smaller than 2 MB. Please choose a smaller file."
+            })
+
         # Create the recipe
         recipe = Recipe.objects.create(
             user=request.user,
             title=title,
             preparation=preparation,
-            notes=notes
+            notes=notes,
+            image=photo
         )
 
         for value in categories:

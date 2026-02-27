@@ -10,7 +10,7 @@
     </div>
     {% endif %}
 
-    <form action="{% url 'new_recipe' %}" method="post">
+    <form action="{% url 'new_recipe' %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <!-- Title -->
         <div class="form-group">
@@ -49,12 +49,26 @@
         <!-- Preparation -->
         <div class="form-group mb-3">
             <label for="preparation">Preparation</label>
-            <textarea id="preparation" name="preparation" class="form-control" rows="5" required></textarea>
+            <textarea id="preparation" name="preparation" class="form-control" rows="9" required></textarea>
         </div>
-        <!-- Notes -->
-        <div class="form-group mb-4">
-            <label for="notes">Notes (optional)</label>
-            <textarea id="notes" name="notes" class="form-control" rows="3"></textarea>
+        <!-- Notes + Image side by side on wide screens -->
+        <div class="row align-items-start mb-4 gy-3">
+            <div class="col-md-7">
+                <div class="form-group h-100">
+                    <label for="notes">Notes (optional)</label>
+                    <textarea id="notes" name="notes" class="form-control notes-textarea" rows="9"></textarea>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <label for="select_image">Image (optional)</label>
+                <div class="image-upload">
+                    <input type="file" id="file" name="photo" accept="image/*" hidden>
+                    <button type="button" class="img-area" id="select_image" data-img="">
+                        <i class='bx bxs-cloud-upload icon'></i>
+                        <label>Upload an image showing your food</label>
+                    </button>
+                </div>
+            </div>
         </div>
         <!-- Save -->
         <input class="btn btn-primary" type="submit" value="Save">
@@ -93,5 +107,33 @@
             });
             addIngredient(); // start with one row
         });
+
+        const selectImage = document.querySelector('#select_image');
+        const inputFile = document.querySelector('#file');
+        const imgArea = document.querySelector('.img-area');
+
+        selectImage.addEventListener('click', function () {
+            inputFile.click();
+        })
+
+        inputFile.addEventListener('change', function () {
+            const image = this.files[0]
+            if(image.size < 2000000) {
+                const reader = new FileReader();
+                reader.onload = ()=> {
+                    const allImg = imgArea.querySelectorAll('img');
+                    allImg.forEach(item=> item.remove());
+                    const imgUrl = reader.result;
+                    const img = document.createElement('img');
+                    img.src = imgUrl;
+                    imgArea.appendChild(img);
+                    imgArea.classList.add('active');
+                    imgArea.dataset.img = image.name;
+                }
+                reader.readAsDataURL(image);
+            } else {
+                alert("Image size more than 2MB");
+            }
+        })
     </script>
 {% endblock %}

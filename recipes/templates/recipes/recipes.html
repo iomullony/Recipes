@@ -1,0 +1,19 @@
+<div class="auction-listings">
+    {% for recipe in recipes %}
+        <div class="recipe-item">
+            <div class="recipe-image">
+                {% if recipe.image and recipe.image.name %}
+                    <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}">
+                {% else %}
+                    <div class="no-image">No image</div>
+                {% endif %}
+            </div>
+            <div class="recipe-details">
+                <h3><a href="#">{{ recipe.title }}</a></h3>
+                <p>{{ recipe.user }}</p>
+            </div>
+        </div>
+    {% empty %}
+        <p>No active listings</p>
+    {% endfor %}
+</div>

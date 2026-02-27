@@ -3,5 +3,6 @@
 
 {% block body %}
 Hello!
+{% include 'recipes/recipes.html' %}
 <a href="{% url 'new_recipe' %}" class="btn btn-primary">+</a>
 {% endblock %}
