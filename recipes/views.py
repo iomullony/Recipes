@@ -1,12 +1,12 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 
-from .models import User, Category, Recipe, Ingredient, RecipeIngredient
+from .models import User, Category, Recipe, Ingredient, RecipeIngredient, Follow, Liked
 
 units = ['g', 'kg', 'mL', 'L', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'unit(s)']
 
@@ -172,3 +172,59 @@ def new_recipe(request):
             "categories": categories,
             "units": units,
         })
+
+
+def profile(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    recipes = Recipe.objects.filter(user=user)
+
+    # Paginate
+    paginator = Paginator(recipes, 2)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Check if current user follows this user
+    is_following = False
+    if request.user.is_authenticated and request.user != user:
+        is_following = Follow.objects.filter(
+            follower=request.user,
+            following=user
+        ).exists()
+    
+    return render(request, "recipes/profile.html", {
+        "user": user,
+        "is_following": is_following,
+        "recipes": page_obj.object_list,
+        "page_obj": page_obj
+    })
+
+
+@login_required
+def follow(request):
+    if request.method == "POST":
+        user_id = request.POST.get('id')
+        target_user = get_object_or_404(User, id=user_id)
+        
+        # Prevent following yourself
+        if request.user == target_user:
+            return redirect('profile', user_id=user_id)
+        
+        # Check if already following
+        follow_obj = Follow.objects.filter(
+            follower=request.user,
+            following=target_user
+        ).first()
+        
+        if follow_obj:
+            # Unfollow
+            follow_obj.delete()
+        else:
+            # Follow
+            Follow.objects.create(
+                follower=request.user,
+                following=target_user
+            )
+        
+        return redirect('profile', user_id=user_id)
+    
+    return redirect('index')

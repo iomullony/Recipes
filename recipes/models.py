@@ -22,6 +22,7 @@ class Recipe(models.Model):
     preparation = models.TextField()
     notes = models.TextField(blank=True)
     image = models.ImageField(upload_to='recipes/', null=True, blank=True)
+    date_time = models.DateTimeField(auto_now_add=True)
 
 
 class RecipeIngredient(models.Model):
@@ -34,3 +35,13 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="item_comments")
     comment = models.CharField(max_length=200)
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
+    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers')
+
+
+class Liked(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='liked_posts')
+    post = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='likes')

@@ -10,7 +10,8 @@
             </div>
             <div class="recipe-details">
                 <h3><a href="#">{{ recipe.title }}</a></h3>
-                <p>{{ recipe.user }}</p>
+                <a class="profile-link" href="{% url 'profile' recipe.user.id %}"><P>{{ recipe.user }}</P></a>
+                <p><small>{{ recipe.date_time }}</small></p>
             </div>
         </div>
     {% empty %}

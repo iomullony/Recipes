@@ -4,13 +4,13 @@
 <html lang="en">
     <head>
         <title>{% block title %}WoNiNi{% endblock %}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
         <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
         <link href="{% static 'recipes/css/styles.css' %}" rel="stylesheet">
         <link href="{% static 'recipes/css/override.css' %}" rel="stylesheet">
     </head>
     <body>
-
         <nav class="navbar navbar-expand-lg navbar-light">
             <a class="navbar-brand mb-2" href="{% url 'index' %}">WoNiNi</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#recipesNavbar" aria-controls="recipesNavbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,9 +19,6 @@
           
             <div class="collapse navbar-collapse" id="recipesNavbar">
               <ul class="navbar-nav mr-auto">
-                {% if user.is_authenticated %}
-                    <li class="nav-item"><a class="nav-link" href="#"><strong>{{ user.username }}</strong></a></li>
-                {% endif %}
                 <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
                 {% if user.is_authenticated %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Cookbook</a></li>
@@ -33,6 +30,15 @@
                 {% else %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Log In</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
+                {% endif %}
+              </ul>
+              <ul class="navbar-nav my-auto">
+                {% if request.user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link profile-icon-link" href="{% url 'profile' request.user.id %}">
+                            <i class='bx bxs-user'></i>
+                        </a>
+                    </li>
                 {% endif %}
               </ul>
             </div>
