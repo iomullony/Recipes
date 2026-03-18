@@ -1,19 +1,27 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Exists, OuterRef, Count, Q
 
 from .models import User, Category, Recipe, Ingredient, RecipeIngredient
 
 units = ['g', 'kg', 'mL', 'L', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'unit(s)']
 
 def index(request):
+    recipes = (
+        Recipe.objects.select_related("user")
+        .order_by("-id")
+    )
+    
+    paginator = Paginator(recipes, 3)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     return render(request, "recipes/index.html", {
-        "recipes": Recipe.objects.all()
+        "page_obj": page_obj
     })
 
 
@@ -157,10 +165,8 @@ def new_recipe(request):
                 quantity=quantity
             )
 
-        # Redirect to recipe detail page or index
         return HttpResponseRedirect(reverse("index"))
     else:
-        # GET request - show the form
         categories = Category.objects.all()
         return render(request, "recipes/new_recipe.html", {
             "categories": categories,

@@ -1,5 +1,5 @@
 <div class="auction-listings">
-    {% for recipe in recipes %}
+    {% for recipe in page_obj.object_list %}
         <div class="recipe-item">
             <div class="recipe-image">
                 {% if recipe.image and recipe.image.name %}
