@@ -16,7 +16,7 @@ def index(request):
         .order_by("-id")
     )
     
-    paginator = Paginator(recipes, 3)
+    paginator = Paginator(recipes, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -174,12 +174,127 @@ def new_recipe(request):
         })
 
 
+@login_required
+def edit_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    if recipe.user != request.user:
+        return redirect("recipe", recipe_id=recipe.id)
+
+    categories = Category.objects.all()
+    existing_ingredients = RecipeIngredient.objects.filter(recipe=recipe).select_related("ingredient")
+    selected_category_ids = list(recipe.categories.values_list("id", flat=True))
+    ingredient_rows = [
+        {
+            "name": row.ingredient.name,
+            "quantity": row.quantity,
+            "unit": row.quantity.split()[-1] if row.quantity and " " in row.quantity else "",
+            "raw_quantity": row.quantity.split()[0] if row.quantity and " " in row.quantity else row.quantity,
+        }
+        for row in existing_ingredients
+    ]
+
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        preparation = request.POST.get("preparation", "").strip()
+        notes = request.POST.get("notes", "").strip()
+        category_values = request.POST.getlist("categories")
+        ingredient_names = request.POST.getlist("ingredient_name")
+        ingredient_quantities = request.POST.getlist("ingredient_qty")
+        ingredient_units = request.POST.getlist("ingredient_unit")
+        photo = request.FILES.get("photo")
+        max_image_bytes = 2 * 1024 * 1024
+
+        if not title:
+            return render(request, "recipes/edit_recipe.html", {
+                "recipe": recipe,
+                "categories": categories,
+                "units": units,
+                "selected_category_ids": selected_category_ids,
+                "ingredient_rows": ingredient_rows,
+                "error": "Title is required.",
+            })
+
+        if not preparation:
+            return render(request, "recipes/edit_recipe.html", {
+                "recipe": recipe,
+                "categories": categories,
+                "units": units,
+                "selected_category_ids": selected_category_ids,
+                "ingredient_rows": ingredient_rows,
+                "error": "Preparation instructions are required.",
+            })
+
+        if photo and photo.size > max_image_bytes:
+            return render(request, "recipes/edit_recipe.html", {
+                "recipe": recipe,
+                "categories": categories,
+                "units": units,
+                "selected_category_ids": selected_category_ids,
+                "ingredient_rows": ingredient_rows,
+                "error": "Image must be smaller than 2 MB. Please choose a smaller file.",
+            })
+
+        recipe.title = title
+        recipe.preparation = preparation
+        recipe.notes = notes
+        if photo:
+            recipe.image = photo
+        elif request.POST.get("remove_image"):
+            if recipe.image:
+                recipe.image.delete(save=False)
+            recipe.image = None
+        recipe.save()
+
+        recipe.categories.clear()
+        for value in category_values:
+            value = value.strip()
+            if not value:
+                continue
+            if value.isdigit():
+                try:
+                    category = Category.objects.get(id=value)
+                    recipe.categories.add(category)
+                except Category.DoesNotExist:
+                    continue
+            else:
+                category, _ = Category.objects.get_or_create(name=value)
+                recipe.categories.add(category)
+
+        RecipeIngredient.objects.filter(recipe=recipe).delete()
+        for i, ingredient_name in enumerate(ingredient_names):
+            ingredient_name = ingredient_name.strip()
+            if not ingredient_name:
+                continue
+            ingredient, _ = Ingredient.objects.get_or_create(name=ingredient_name)
+            qty_val = ingredient_quantities[i].strip() if i < len(ingredient_quantities) else ""
+            unit_val = ingredient_units[i].strip() if i < len(ingredient_units) else ""
+            quantity = qty_val if qty_val else ""
+            if qty_val and unit_val:
+                quantity = f"{qty_val} {unit_val}"
+
+            RecipeIngredient.objects.create(
+                recipe=recipe,
+                ingredient=ingredient,
+                quantity=quantity,
+            )
+
+        return redirect("recipe", recipe_id=recipe.id)
+
+    return render(request, "recipes/edit_recipe.html", {
+        "recipe": recipe,
+        "categories": categories,
+        "units": units,
+        "selected_category_ids": selected_category_ids,
+        "ingredient_rows": ingredient_rows,
+    })
+
+
 def profile(request, user_id):
     user = get_object_or_404(User, id=user_id)
     recipes = Recipe.objects.filter(user=user)
 
     # Paginate
-    paginator = Paginator(recipes, 2)
+    paginator = Paginator(recipes, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 

@@ -2,7 +2,7 @@
 
 {% block body %}
 
-    <h2>New recipe</h2>
+    <h2>Edit recipe</h2>
 
     {% if error %}
     <div class="alert alert-danger" role="alert">
@@ -10,23 +10,22 @@
     </div>
     {% endif %}
 
-    <form action="{% url 'new_recipe' %}" method="post" enctype="multipart/form-data">
+    <form action="{% url 'edit_recipe' recipe.id %}" method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <!-- Title -->
         <div class="form-group">
             <label for="title" class="form-label">Title</label>
-            <input autofocus required id="title" class="form-control" type="text" name="title">
+            <input autofocus required id="title" class="form-control" type="text" name="title" value="{{ recipe.title }}">
         </div>
-        <!-- Categories -->
+
         <div class="form-group">
             <label for="categories" class="form-label">Categories</label>
             <select id="categories" class="form-select" name="categories" multiple>
                 {% for category in categories %}
-                    <option value="{{ category.id }}">{{ category.name }}</option>
+                    <option value="{{ category.id }}" {% if category.id in selected_category_ids %}selected{% endif %}>{{ category.name }}</option>
                 {% endfor %}
             </select>
         </div>
-        <!-- Ingredients -->
+
         <div class="form-group mb-3">
             <label>Ingredients</label>
             <div id="ingredients-list"></div>
@@ -43,37 +42,45 @@
                     </select>
                 </div>
                 <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()">&times;</button>
-            </div>          
+            </div>
             </template>
         </div>
-        <!-- Preparation -->
+
         <div class="form-group mb-3">
             <label for="preparation">Preparation</label>
-            <textarea id="preparation" name="preparation" class="form-control" rows="9" required></textarea>
+            <textarea id="preparation" name="preparation" class="form-control" rows="9" required>{{ recipe.preparation }}</textarea>
         </div>
-        <!-- Notes + Image side by side on wide screens -->
+
         <div class="row align-items-start mb-4 gy-3">
             <div class="col-md-7">
                 <div class="form-group h-100">
                     <label for="notes">Notes (optional)</label>
-                    <textarea id="notes" name="notes" class="form-control notes-textarea" rows="9"></textarea>
+                    <textarea id="notes" name="notes" class="form-control notes-textarea" rows="9">{{ recipe.notes }}</textarea>
                 </div>
             </div>
             <div class="col-md-5">
                 <label for="select_image">Image (optional)</label>
                 <div class="image-upload">
+                    <input type="hidden" name="remove_image" id="remove_image_field" value="">
                     <input type="file" id="file" name="photo" accept="image/*" hidden>
-                    <button type="button" class="img-area" id="select_image" data-img="">
+                    <button type="button" class="img-area {% if recipe.image %}active{% endif %}" id="select_image"
+                        data-img="{% if recipe.image %}Current image{% endif %}"
+                        {% if recipe.image %}data-original-url="{{ recipe.image.url }}"{% endif %}>
+                        {% if recipe.image %}
+                            <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}">
+                        {% endif %}
                         <i class='bx bxs-cloud-upload icon'></i>
-                        <label>Upload an image showing your food</label>
+                        <label>Upload a new image to replace current one</label>
                     </button>
                     <button type="button" class="btn btn-outline-secondary" id="clear_recipe_image">Remove image</button>
                 </div>
             </div>
         </div>
-        <!-- Save -->
-        <input class="btn btn-primary" type="submit" value="Save">
+
+        <input class="btn btn-primary" type="submit" value="Save changes">
     </form>
+
+    {{ ingredient_rows|json_script:"ingredient-data" }}
 
     {% include 'recipes/includes/recipe_crop_modal.html' %}
 
@@ -81,34 +88,45 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 
     <script>
-        const unitSelectOptions = {
-            persist: false,
-            highlight: true,
-            placeholder: 'Unit'
-        };
-
-        function enhanceUnitSelect(selectEl) {
-            // Prevent double-initialization when cloning
-            if (selectEl.tomselect) return;
-            new TomSelect(selectEl, unitSelectOptions);
-        }
-
-        function addIngredient() {
+        function addIngredient(name = "", qty = "", unit = "") {
             const tpl = document.getElementById('ingredient-template').content.cloneNode(true);
             const row = tpl.querySelector('.ingredient-row');
-            const unitSelect = tpl.querySelector('.ingredient-unit');
+            const nameInput = row.querySelector('input[name="ingredient_name"]');
+            const qtyInput = row.querySelector('input[name="ingredient_qty"]');
+            const unitSelect = row.querySelector('.ingredient-unit');
+
+            nameInput.value = name;
+            qtyInput.value = qty;
             document.getElementById('ingredients-list').appendChild(tpl);
-            enhanceUnitSelect(document.getElementById('ingredients-list').lastElementChild.querySelector('.ingredient-unit'));
+
+            const insertedRow = document.getElementById('ingredients-list').lastElementChild;
+            const insertedUnit = insertedRow.querySelector('.ingredient-unit');
+            if (!insertedUnit.tomselect) {
+                new TomSelect(insertedUnit, {
+                    persist: false,
+                    highlight: true,
+                    placeholder: 'Unit'
+                });
+            }
+            if (unit && insertedUnit.tomselect) {
+                insertedUnit.tomselect.setValue(unit, true);
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             new TomSelect("#categories", {
-            create: true,
-            persist: false,
-            highlight: true,
-            plugins: ['remove_button'],
+                create: true,
+                persist: false,
+                highlight: true,
+                plugins: ['remove_button'],
             });
-            addIngredient(); // start with one row
+
+            const ingredientData = JSON.parse(document.getElementById("ingredient-data").textContent || "[]");
+            if (ingredientData.length) {
+                ingredientData.forEach((item) => addIngredient(item.name, item.raw_quantity, item.unit));
+            } else {
+                addIngredient();
+            }
         });
 
         const selectImage = document.querySelector('#select_image');
@@ -119,7 +137,9 @@
             inputFile.click();
         });
 
-        /* Image preview + crop: see recipe-image-crop.js + recipe_crop_modal.html */
+        const removeImageField = document.getElementById('remove_image_field');
+
+        /* Crop + preview: recipe-image-crop.js (clears remove_image_field when crop is applied) */
 
         document.getElementById('clear_recipe_image').addEventListener('click', function () {
             if (typeof window.recipeImageCropClearAccepted === 'function') {
@@ -129,6 +149,8 @@
             imgArea.querySelectorAll('img').forEach((item) => item.remove());
             imgArea.classList.remove('active');
             imgArea.dataset.img = '';
+            // Tell the server to delete the stored image on save (view checks POST remove_image)
+            if (removeImageField) removeImageField.value = '1';
         });
     </script>
 {% endblock %}

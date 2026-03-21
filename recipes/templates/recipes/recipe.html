@@ -13,15 +13,17 @@
                 </p>
                 <h1 class="recipe-title">{{ recipe.title }}</h1>
                 {% if request.user == recipe.user %}
-                    <a class="btn btn-outline-primary btn-sm mt-2" href="#">Edit recipe</a>
+                    <a class="btn btn-outline-primary btn-sm mt-2" href="{% url 'edit_recipe' recipe.id %}">Edit recipe</a>
+                {% else %}
+                    <!-- <a class="btn btn-outline-primary btn-sm mt-2" href="#"><i class="fa-regular fa-bookmark"></i></a> -->
                 {% endif %}
             </div>
         </header>
 
-        {% if recipe.image %}
-            <!-- <div class="recipe-hero-image-wrap"> -->
-                <p><img class="image" src="{{ recipe.image.url }}" alt="{{ recipe.title }}"></p>
-            <!-- </div> -->
+        {% if recipe.image and recipe.image.name %}
+            <div class="recipe-hero-image-wrap">
+                <img class="recipe-hero-image" src="{{ recipe.image.url }}" alt="{{ recipe.title }}" width="960" height="540" loading="lazy">
+            </div>
         {% endif %}
 
         <div class="recipe-content-grid">
