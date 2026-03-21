@@ -16,8 +16,15 @@
                 {% csrf_token %}
                 <input type="hidden" name="id" value="{{ user.id }}">
                 <button type="submit" class="btn btn-primary">{% if is_following %}Unfollow{% else %}Follow{% endif %}</button>
-            </form>           
+            </form>
+        {% elif request.user == user and request.user.is_authenticated %}
+            <form method="post" action="#" class="follow-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">Edit</button>
+                <a class="btn btn-primary" href="{% url 'logout' %}">Log Out</a>
+            </form>
         {% endif %}
+        
     </div>
 </div>
 {% include 'recipes/recipes.html' %}

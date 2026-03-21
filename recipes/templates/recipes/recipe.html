@@ -1,0 +1,55 @@
+{% extends "recipes/layout.html" %}
+
+{% block body %}
+    <article class="recipe-page">
+        <header class="recipe-hero">
+            <div>
+                <p class="recipe-meta mb-2">
+                    By
+                    <a class="profile-link" href="{% url 'profile' recipe.user.id %}">
+                        {{ recipe.user }}
+                    </a>
+                    {% if recipe.date_time %} • {{ recipe.date_time|date:"M d, Y" }}{% endif %}
+                </p>
+                <h1 class="recipe-title">{{ recipe.title }}</h1>
+                {% if request.user == recipe.user %}
+                    <a class="btn btn-outline-primary btn-sm mt-2" href="#">Edit recipe</a>
+                {% endif %}
+            </div>
+        </header>
+
+        {% if recipe.image %}
+            <!-- <div class="recipe-hero-image-wrap"> -->
+                <p><img class="image" src="{{ recipe.image.url }}" alt="{{ recipe.title }}"></p>
+            <!-- </div> -->
+        {% endif %}
+
+        <div class="recipe-content-grid">
+            <section class="recipe-card">
+                <h4>Ingredients</h4>
+                <ul class="ingredients-list">
+                    {% for item in ingredients %}
+                        <li>
+                            <span>{{ item.ingredient.name }}</span>
+                            {% if item.quantity %}
+                                <small>{{ item.quantity }}</small>
+                            {% endif %}
+                        </li>
+                    {% empty %}
+                        <li><span>No ingredients listed.</span></li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <section class="recipe-card">
+                <h4>Preparation</h4>
+                <p class="recipe-text">{{ recipe.preparation|linebreaksbr }}</p>
+
+                {% if recipe.notes %}
+                    <h4 class="mt-4">Notes</h4>
+                    <p class="recipe-text">{{ recipe.notes|linebreaksbr }}</p>
+                {% endif %}
+            </section>
+        </div>
+    </article>
+{% endblock %}

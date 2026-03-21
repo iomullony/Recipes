@@ -45,3 +45,17 @@ class Follow(models.Model):
 class Liked(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='liked_posts')
     post = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='likes')
+
+
+class PantryItem(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="pantry_items")
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name="pantry_items")
+    quantity = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    unit = models.CharField(max_length=20, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "ingredient"], name="unique_user_ingredient_pantry")
+        ]
+        ordering = ["ingredient__name"]

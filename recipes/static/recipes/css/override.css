@@ -262,3 +262,150 @@ i{
     object-fit: cover;
     flex-shrink: 0;
 }
+
+/* Pantry */
+.pantry-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.pantry-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    background: #fff;
+}
+
+.pantry-list-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.pantry-search {
+    width: min(300px, 100%);
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+}
+
+.pantry-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pantry-item-row {
+    display: grid;
+    grid-template-columns: minmax(130px, 1fr) 110px 110px auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.pantry-ingredient {
+    font-weight: 600;
+    color: #21214c;
+}
+
+.pantry-delete-form {
+    margin-top: -4px;
+    margin-bottom: 8px;
+}
+
+/* Recipe detail */
+.recipe-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.recipe-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.recipe-title {
+    margin: 0;
+    color: #21214c;
+    font-weight: 800;
+}
+
+.recipe-meta {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.recipe-hero-image-wrap {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fafafa;
+}
+
+.recipe-hero-image {
+    width: 100%;
+    max-height: 460px;
+    object-fit: cover;
+    display: block;
+}
+
+.recipe-content-grid {
+    display: grid;
+    grid-template-columns: minmax(220px, 320px) 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.recipe-card {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 16px;
+    background: #fff;
+}
+
+.ingredients-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ingredients-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.recipe-text {
+    margin: 0;
+    line-height: 1.6;
+}
+
+@media (max-width: 992px) {
+    .pantry-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .pantry-item-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .pantry-item-row .pantry-ingredient {
+        grid-column: 1 / -1;
+    }
+
+    .recipe-content-grid {
+        grid-template-columns: 1fr;
+    }
+}

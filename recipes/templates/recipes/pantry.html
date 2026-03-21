@@ -1,0 +1,69 @@
+{% extends "recipes/layout.html" %}
+
+{% block body %}
+<h2 class="mb-4">My Inventory</h2>
+
+<div class="pantry-layout">
+    <div class="pantry-card">
+        <h4>Add Ingredient</h4>
+        <form method="post" action="{% url 'pantry' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="ingredient_name">Ingredient</label>
+                <input id="ingredient_name" class="form-control" type="text" name="ingredient_name" placeholder="e.g. Sugar" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-6">
+                    <label for="quantity">Quantity</label>
+                    <input id="quantity" class="form-control" type="number" name="quantity" step="0.01" min="0" placeholder="0">
+                </div>
+                <div class="form-group col-6">
+                    <label for="unit">Unit</label>
+                    <select id="unit" class="form-control" name="unit">
+                        <option value="">-</option>
+                        {% for unit in units %}
+                            <option value="{{ unit }}">{{ unit }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" type="submit">Add / Update</button>
+        </form>
+    </div>
+
+    <div class="pantry-card">
+        <div class="pantry-list-header">
+            <h4 class="mb-0">Pantry Items</h4>
+            <form method="get" action="{% url 'pantry' %}" class="pantry-search">
+                <input class="form-control" type="text" name="q" value="{{ query }}" placeholder="Search ingredient...">
+                <button class="btn btn-primary" type="submit">Search</button>
+            </form>
+        </div>
+
+        {% if pantry_items %}
+            <div class="pantry-items">
+                {% for item in pantry_items %}
+                    <form method="post" action="{% url 'pantry_update' item.id %}" class="pantry-item-row">
+                        {% csrf_token %}
+                        <div class="pantry-ingredient">{{ item.ingredient.name }}</div>
+                        <input class="form-control pantry-qty" type="number" name="quantity" min="0" step="0.01" value="{{ item.quantity }}" aria-label="Quantity for {{ item.ingredient.name }}">
+                        <select class="form-control pantry-unit" name="unit" aria-label="Unit for {{ item.ingredient.name }}">
+                            <option value="">-</option>
+                            {% for unit in units %}
+                                <option value="{{ unit }}" {% if item.unit == unit %}selected{% endif %}>{{ unit }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn btn-outline-primary btn-sm" type="submit">Save</button>
+                    </form>
+                    <form method="post" action="{% url 'pantry_delete' item.id %}" class="pantry-delete-form">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-danger btn-sm" type="submit">Remove</button>
+                    </form>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="mb-0">No ingredients in your inventory yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

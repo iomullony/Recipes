@@ -1,4 +1,4 @@
-<div class="auction-listings">
+<div class="recipe-listings">
     {% for recipe in page_obj.object_list %}
         <div class="recipe-item">
             <div class="recipe-image">
@@ -9,12 +9,12 @@
                 {% endif %}
             </div>
             <div class="recipe-details">
-                <h3><a href="#">{{ recipe.title }}</a></h3>
+                <h3><a href="{% url 'recipe' recipe.id %}">{{ recipe.title }}</a></h3>
                 <a class="profile-link" href="{% url 'profile' recipe.user.id %}"><P>{{ recipe.user }}</P></a>
                 <p><small>{{ recipe.date_time }}</small></p>
             </div>
         </div>
     {% empty %}
-        <p>No active listings</p>
+        <p>No recipes found</p>
     {% endfor %}
 </div>

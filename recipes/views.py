@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 
-from .models import User, Category, Recipe, Ingredient, RecipeIngredient, Follow, Liked
+from .models import User, Category, Recipe, Ingredient, RecipeIngredient, Follow, Liked, PantryItem
 
 units = ['g', 'kg', 'mL', 'L', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'unit(s)']
 
@@ -228,3 +228,80 @@ def follow(request):
         return redirect('profile', user_id=user_id)
     
     return redirect('index')
+
+
+@login_required
+def pantry(request):
+    query = request.GET.get("q", "").strip()
+    pantry_items = PantryItem.objects.filter(user=request.user).select_related("ingredient")
+
+    if query:
+        pantry_items = pantry_items.filter(ingredient__name__icontains=query)
+
+    if request.method == "POST":
+        ingredient_name = request.POST.get("ingredient_name", "").strip()
+        quantity_raw = request.POST.get("quantity", "").strip()
+        unit = request.POST.get("unit", "").strip()
+
+        if ingredient_name:
+            ingredient, _ = Ingredient.objects.get_or_create(name=ingredient_name)
+
+            try:
+                quantity = float(quantity_raw) if quantity_raw else 0.0
+            except ValueError:
+                quantity = 0.0
+
+            pantry_item, created = PantryItem.objects.get_or_create(
+                user=request.user,
+                ingredient=ingredient,
+                defaults={"quantity": quantity, "unit": unit}
+            )
+
+            if not created:
+                pantry_item.quantity = quantity
+                pantry_item.unit = unit
+                pantry_item.save()
+
+        return redirect("pantry")
+
+    return render(request, "recipes/pantry.html", {
+        "pantry_items": pantry_items,
+        "units": units,
+        "query": query,
+    })
+
+
+@login_required
+def pantry_update(request, item_id):
+    if request.method == "POST":
+        pantry_item = get_object_or_404(PantryItem, id=item_id, user=request.user)
+        quantity_raw = request.POST.get("quantity", "").strip()
+        unit = request.POST.get("unit", "").strip()
+
+        try:
+            pantry_item.quantity = float(quantity_raw) if quantity_raw else 0.0
+        except ValueError:
+            pantry_item.quantity = 0.0
+
+        pantry_item.unit = unit
+        pantry_item.save()
+
+    return redirect("pantry")
+
+
+@login_required
+def pantry_delete(request, item_id):
+    if request.method == "POST":
+        pantry_item = get_object_or_404(PantryItem, id=item_id, user=request.user)
+        pantry_item.delete()
+    return redirect("pantry")
+
+
+def recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe.objects.select_related("user"), id=recipe_id)
+    ingredients = RecipeIngredient.objects.filter(recipe=recipe).select_related("ingredient")
+
+    return render(request, 'recipes/recipe.html', {
+        'recipe': recipe,
+        'ingredients': ingredients,
+    })

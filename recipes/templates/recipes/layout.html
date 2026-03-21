@@ -4,6 +4,7 @@
 <html lang="en">
     <head>
         <title>{% block title %}WoNiNi{% endblock %}</title>
+        <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
         <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
@@ -22,11 +23,10 @@
                 <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
                 {% if user.is_authenticated %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Cookbook</a></li>
-                    <!-- <li class="nav-item"><a class="nav-link" href="#">Favourites</a></li> -->
+                    <li class="nav-item"><a class="nav-link" href="{% url 'pantry' %}">Inventory</a></li>
                     <li class="nav-item"><a class="nav-link" href="#">Planner</a></li>
                     <li class="nav-item"><a class="nav-link" href="#">Shopping</a></li>
                     <!-- <li class="nav-item"><a class="nav-link" href="#">Following</a></li> -->
-                    <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Log Out</a></li>
                 {% else %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Log In</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
@@ -35,7 +35,7 @@
               <ul class="navbar-nav my-auto">
                 {% if request.user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link profile-icon-link" href="{% url 'profile' request.user.id %}">
+                        <a class="nav-link profile-icon-link" href="{% url 'profile' request.user.id %}" title="My profile" aria-label="My profile">
                             <i class='bx bxs-user'></i>
                         </a>
                     </li>
