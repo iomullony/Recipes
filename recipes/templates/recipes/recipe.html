@@ -14,15 +14,19 @@
                 <h1 class="recipe-title">{{ recipe.title }}</h1>
                 {% if request.user == recipe.user %}
                     <a class="btn btn-outline-primary btn-sm mt-2" href="{% url 'edit_recipe' recipe.id %}">Edit recipe</a>
+                    <form method="post" action="{% url 'delete_recipe' recipe.id %}" class="d-inline" onsubmit="return confirm('Delete this recipe permanently?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-sm mt-2">Delete recipe</button>
+                    </form>
                 {% else %}
-                    <!-- <a class="btn btn-outline-primary btn-sm mt-2" href="#"><i class="fa-regular fa-bookmark"></i></a> -->
+                    <!-- <a class="btn btn-outline-primary btn-sm mt-2" href="#">Edit recipe</a> -->
                 {% endif %}
             </div>
         </header>
 
         {% if recipe.image and recipe.image.name %}
             <div class="recipe-hero-image-wrap">
-                <img class="recipe-hero-image" src="{{ recipe.image.url }}" alt="{{ recipe.title }}" width="960" height="540" loading="lazy">
+                <img class="recipe-hero-image" src="{{ recipe.image.url }}" alt="{{ recipe.title }}" width="560" height="315" loading="lazy">
             </div>
         {% endif %}
 
@@ -51,6 +55,41 @@
                     <h4 class="mt-4">Notes</h4>
                     <p class="recipe-text">{{ recipe.notes|linebreaksbr }}</p>
                 {% endif %}
+            </section>
+
+            <section class="recipe-card">
+                <h4>Ratings</h4>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+                <span class="fa fa-star checked"></span>
+                <span class="fa fa-star checked"></span>
+                <span class="fa fa-star checked"></span>
+                <span class="fa fa-star"></span>
+                <span class="fa fa-star"></span>
+            </section>
+
+            <section class="recipe-card">
+                <h4>Comments</h4>
+                <form class="comment input-group comment-inline-form" action="{% url 'add_comment' recipe.id %}" method="post">
+                    {% csrf_token %}
+                    <input class="form-control" type="text" name="comment" placeholder="Write a comment" required autocomplete="off" aria-label="Write a comment">
+                    <button class="btn btn-primary" type="submit" aria-label="Send comment">
+                        <i class="material-icons">send</i>
+                    </button>
+                </form>
+                <ul class="comments-list">
+                    {% for comment in comments %}
+                        <li>
+                            <div>
+                                <strong><a class="recipe-item-author" href="{% url 'profile' comment.user.id %}"><h5>@{{ comment.user }}</h5></a>
+                                </strong>{{ comment.comment }}
+                            </div>
+                            <span class="recipe-item-date"><small>{{ comment.date_time|date:"M j, Y" }}</small></span>
+                        </li>
+                    {% empty %}
+                        <li><span>No comments yet.</span></li>
+                    {% endfor %}
+                </ul>
             </section>
         </div>
     </article>

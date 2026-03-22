@@ -17,9 +17,7 @@
                 </h3>
                 <p class="recipe-item-meta">
                     <a class="recipe-item-author" href="{% url 'profile' recipe.user.id %}">{{ recipe.user }}</a>
-                    {% if recipe.date_time %}
-                        <span class="recipe-item-date">{{ recipe.date_time|date:"M j, Y" }}</span>
-                    {% endif %}
+                    <span class="recipe-item-date">{{ recipe.date_time|date:"M j, Y" }}</span>
                 </p>
             </div>
         </article>

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.functions import Lower
 
 
 class User(AbstractUser):
@@ -9,9 +10,25 @@ class User(AbstractUser):
 class Category(models.Model):
     name = models.CharField(max_length=60, unique=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                Lower("name"),
+                name="unique_category_name_ci",
+            )
+        ]
+
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=80, unique=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                Lower("name"),
+                name="unique_ingredient_name_ci",
+            )
+        ]
 
 
 class Recipe(models.Model):
@@ -35,6 +52,7 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     item = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="item_comments")
     comment = models.CharField(max_length=200)
+    date_time = models.DateTimeField(auto_now_add=True)
 
 
 class Follow(models.Model):

@@ -2,10 +2,9 @@
 .body {
     padding-top: 20px;
     padding-bottom: 20px;
-    padding-inline: clamp(20px, 8vw, 360px); /* For scaling */
+    padding-inline: clamp(20px, 8vw, 360px);
 }
 
-/* Floating + button (index / new recipe) — stays visible while scrolling */
 .fab-new-recipe {
     position: fixed;
     right: 24px;
@@ -48,7 +47,6 @@
 }
 
 .profile-icon-link {
-    /* Keeps the profile icon consistent in both desktop and collapsed navbar */
     width: 40px;
     height: 40px;
     padding: 0;
@@ -246,7 +244,6 @@
     transform: translateY(-2px);
 }
 
-/* 16:9 image frame — same crop behavior as upload preview (.img-area img) and detail (.recipe-hero-image) */
 .recipe-item-thumb {
     position: relative;
     flex: 0 0 200px;
@@ -371,12 +368,11 @@
     max-width: 100%;
 }
 
-/* Recipe detail hero — same 16:9 + cover as list + upload */
 .recipe-hero-image-wrap {
     position: relative;
     width: 100%;
-    max-width: 960px;
-    margin: 0 auto;
+    max-width: min(560px, 100%);
+    margin: 0 auto 8px;
     border-radius: 10px;
     overflow: hidden;
     border: 1px solid #e8e8e8;
@@ -529,6 +525,34 @@
     background: #fff;
 }
 
+.comment input {
+    border: 1px solid #ddd;
+    border-radius: 0.25rem !important;
+}
+
+.comment input:focus {
+    border: 1px solid #ddd;
+    box-shadow: 0 0 0 0.1rem #dddddd;
+}
+
+.comments-list {
+    margin-top: 10px;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.comments-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
 .ingredients-list {
     list-style: none;
     margin: 0;
@@ -550,6 +574,20 @@
 .recipe-text {
     margin: 0;
     line-height: 1.6;
+}
+
+.comment-inline-form {
+    width: 100%;
+    max-width: 520px;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.comment-inline-form .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-inline: 14px;
 }
 
 @media (max-width: 992px) {

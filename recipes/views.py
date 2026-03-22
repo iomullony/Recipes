@@ -6,9 +6,30 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 
-from .models import User, Category, Recipe, Ingredient, RecipeIngredient, Follow, Liked, PantryItem
+from .models import User, Category, Recipe, Ingredient, RecipeIngredient, Follow, Comment, PantryItem
 
 units = ['g', 'kg', 'mL', 'L', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'unit(s)']
+
+
+def get_or_create_ingredient_ci(name):
+    cleaned = name.strip()
+    if not cleaned:
+        return None, False
+    existing = Ingredient.objects.filter(name__iexact=cleaned).first()
+    if existing:
+        return existing, False
+    return Ingredient.objects.create(name=cleaned), True
+
+
+def get_or_create_category_ci(name):
+    cleaned = name.strip()
+    if not cleaned:
+        return None, False
+    existing = Category.objects.filter(name__iexact=cleaned).first()
+    if existing:
+        return existing, False
+    return Category.objects.create(name=cleaned), True
+
 
 def index(request):
     recipes = (
@@ -136,7 +157,9 @@ def new_recipe(request):
                     pass
             else:
                 # New category created via Tom Select
-                category, created = Category.objects.get_or_create(name=value.strip())
+                category, _ = get_or_create_category_ci(value)
+                if not category:
+                    continue
                 recipe.categories.add(category)
 
         # Handle ingredients
@@ -147,7 +170,9 @@ def new_recipe(request):
                 continue
             
             # Get or create the ingredient
-            ingredient, created = Ingredient.objects.get_or_create(name=ingredient_name)
+            ingredient, _ = get_or_create_ingredient_ci(ingredient_name)
+            if not ingredient:
+                continue
             
             # Build quantity string: number + unit (e.g. "2 cups", "100 g")
             quantity = ""
@@ -257,7 +282,9 @@ def edit_recipe(request, recipe_id):
                 except Category.DoesNotExist:
                     continue
             else:
-                category, _ = Category.objects.get_or_create(name=value)
+                category, _ = get_or_create_category_ci(value)
+                if not category:
+                    continue
                 recipe.categories.add(category)
 
         RecipeIngredient.objects.filter(recipe=recipe).delete()
@@ -265,7 +292,9 @@ def edit_recipe(request, recipe_id):
             ingredient_name = ingredient_name.strip()
             if not ingredient_name:
                 continue
-            ingredient, _ = Ingredient.objects.get_or_create(name=ingredient_name)
+            ingredient, _ = get_or_create_ingredient_ci(ingredient_name)
+            if not ingredient:
+                continue
             qty_val = ingredient_quantities[i].strip() if i < len(ingredient_quantities) else ""
             unit_val = ingredient_units[i].strip() if i < len(ingredient_units) else ""
             quantity = qty_val if qty_val else ""
@@ -359,7 +388,9 @@ def pantry(request):
         unit = request.POST.get("unit", "").strip()
 
         if ingredient_name:
-            ingredient, _ = Ingredient.objects.get_or_create(name=ingredient_name)
+            ingredient, _ = get_or_create_ingredient_ci(ingredient_name)
+            if not ingredient:
+                return redirect("pantry")
 
             try:
                 quantity = float(quantity_raw) if quantity_raw else 0.0
@@ -415,8 +446,45 @@ def pantry_delete(request, item_id):
 def recipe(request, recipe_id):
     recipe = get_object_or_404(Recipe.objects.select_related("user"), id=recipe_id)
     ingredients = RecipeIngredient.objects.filter(recipe=recipe).select_related("ingredient")
+    comments = recipe.item_comments.all()
 
     return render(request, 'recipes/recipe.html', {
         'recipe': recipe,
         'ingredients': ingredients,
+        'comments': comments,
     })
+
+
+@login_required
+def delete_recipe(request, recipe_id):
+    """
+    Delete a recipe owned by the current user; confirmation handled client-side.
+    Accepts POST only to avoid accidental deletes via link navigation.
+    """
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    if recipe.user != request.user:
+        return redirect("recipe", recipe_id=recipe.id)
+
+    if request.method == "POST":
+        recipe.delete()
+        return redirect("index")
+
+    return redirect("recipe", recipe_id=recipe.id)
+
+
+@login_required
+def add_comment(request, recipe_id):
+    if request.method == "POST":
+        
+        comment = request.POST.get('comment')
+        item = Recipe.objects.get(id=recipe_id)
+        
+        Comment.objects.create(
+            user=request.user,
+            item=item,
+            comment=comment
+        )    
+    
+        return redirect('recipe', recipe_id=recipe_id)
+    else:
+        return redirect('index')

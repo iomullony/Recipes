@@ -15,4 +15,6 @@ urlpatterns = [
     path("pantry/<int:item_id>/delete/", views.pantry_delete, name="pantry_delete"),
     path('recipe/<int:recipe_id>/', views.recipe, name='recipe'),
     path("recipe/<int:recipe_id>/edit/", views.edit_recipe, name="edit_recipe"),
+    path("recipe/<int:recipe_id>/delete/", views.delete_recipe, name="delete_recipe"),
+    path("add_comment/<int:recipe_id>/", views.add_comment, name="add_comment"),
 ]
