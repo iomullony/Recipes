@@ -1,12 +1,14 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.utils.http import url_has_allowed_host_and_scheme
 
-from .models import User, Category, Recipe, Ingredient, RecipeIngredient, Follow, Comment, PantryItem
+from .models import User, Category, Recipe, Ingredient, RecipeIngredient, Follow, Comment, PantryItem, SavedRecipe
 
 units = ['g', 'kg', 'mL', 'L', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'unit(s)']
 
@@ -15,20 +17,28 @@ def get_or_create_ingredient_ci(name):
     cleaned = name.strip()
     if not cleaned:
         return None, False
-    existing = Ingredient.objects.filter(name__iexact=cleaned).first()
+    normalized = cleaned.capitalize()
+    existing = Ingredient.objects.filter(name__iexact=normalized).first()
     if existing:
+        if existing.name != normalized:
+            existing.name = normalized
+            existing.save(update_fields=["name"])
         return existing, False
-    return Ingredient.objects.create(name=cleaned), True
+    return Ingredient.objects.create(name=normalized), True
 
 
 def get_or_create_category_ci(name):
     cleaned = name.strip()
     if not cleaned:
         return None, False
-    existing = Category.objects.filter(name__iexact=cleaned).first()
+    normalized = cleaned.capitalize()
+    existing = Category.objects.filter(name__iexact=normalized).first()
     if existing:
+        if existing.name != normalized:
+            existing.name = normalized
+            existing.save(update_fields=["name"])
         return existing, False
-    return Category.objects.create(name=cleaned), True
+    return Category.objects.create(name=normalized), True
 
 
 def index(request):
@@ -448,19 +458,55 @@ def recipe(request, recipe_id):
     ingredients = RecipeIngredient.objects.filter(recipe=recipe).select_related("ingredient")
     comments = recipe.item_comments.all()
 
+    is_saved = False
+    if request.user.is_authenticated and request.user != recipe.user:
+        is_saved = SavedRecipe.objects.filter(user=request.user, recipe=recipe).exists()
+
     return render(request, 'recipes/recipe.html', {
         'recipe': recipe,
         'ingredients': ingredients,
         'comments': comments,
+        'is_saved': is_saved,
+    })
+
+
+@login_required
+def save_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+
+    if request.method == "POST" and recipe.user != request.user:
+        saved = SavedRecipe.objects.filter(user=request.user, recipe=recipe).first()
+        if saved:
+            saved.delete()
+        else:
+            SavedRecipe.objects.create(user=request.user, recipe=recipe)
+
+    next_url = request.POST.get("next", "")
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        return redirect(next_url)
+    return redirect("recipe", recipe_id=recipe.id)
+
+
+@login_required
+def cookbook(request):
+    recipes = (
+        Recipe.objects.filter(Q(user=request.user) | Q(saved_by__user=request.user))
+        .select_related("user")
+        .distinct()
+        .order_by("-id")
+    )
+
+    paginator = Paginator(recipes, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "recipes/cookbook.html", {
+        "page_obj": page_obj,
     })
 
 
 @login_required
 def delete_recipe(request, recipe_id):
-    """
-    Delete a recipe owned by the current user; confirmation handled client-side.
-    Accepts POST only to avoid accidental deletes via link navigation.
-    """
     recipe = get_object_or_404(Recipe, id=recipe_id)
     if recipe.user != request.user:
         return redirect("recipe", recipe_id=recipe.id)

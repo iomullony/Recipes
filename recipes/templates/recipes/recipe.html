@@ -18,8 +18,15 @@
                         {% csrf_token %}
                         <button type="submit" class="btn btn-outline-danger btn-sm mt-2">Delete recipe</button>
                     </form>
-                {% else %}
-                    <!-- <a class="btn btn-outline-primary btn-sm mt-2" href="#">Edit recipe</a> -->
+                {% elif request.user.is_authenticated %}
+                    <form method="post" action="{% url 'save_recipe' recipe.id %}" class="d-inline">
+                        {% csrf_token %}
+                        {% if is_saved %}
+                            <button type="submit" class="btn btn-primary btn-sm mt-2">Saved &#10003; (remove)</button>
+                        {% else %}
+                            <button type="submit" class="btn btn-outline-primary btn-sm mt-2">Save recipe</button>
+                        {% endif %}
+                    </form>
                 {% endif %}
             </div>
         </header>
@@ -81,7 +88,7 @@
                     {% for comment in comments %}
                         <li>
                             <div>
-                                <strong><a class="recipe-item-author" href="{% url 'profile' comment.user.id %}"><h5>@{{ comment.user }}</h5></a>
+                                <strong><a href="{% url 'profile' comment.user.id %}"><h5>@{{ comment.user }}</h5></a>
                                 </strong>{{ comment.comment }}
                             </div>
                             <span class="recipe-item-date"><small>{{ comment.date_time|date:"M j, Y" }}</small></span>

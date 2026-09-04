@@ -1,0 +1,43 @@
+{% extends "recipes/layout.html" %}
+{% load static %}
+
+{% block body %}
+    <h2>My Cookbook</h2>
+    <div class="recipe-listings">
+        {% for recipe in page_obj.object_list %}
+            <article class="recipe-item">
+                <a href="{% url 'recipe' recipe.id %}" class="recipe-item-thumb" aria-hidden="true" tabindex="-1">
+                    {% if recipe.image and recipe.image.name %}
+                        <img src="{{ recipe.image.url }}" alt="" width="200" height="113" loading="lazy">
+                    {% else %}
+                        <div class="recipe-no-image">
+                            <i class="bx bx-image-alt" aria-hidden="true"></i>
+                            <span>No photo</span>
+                        </div>
+                    {% endif %}
+                </a>
+                <div class="recipe-details">
+                    <h3 class="recipe-item-title">
+                        <a href="{% url 'recipe' recipe.id %}">{{ recipe.title }}</a>
+                    </h3>
+                    <p class="recipe-item-meta">
+                        <a class="recipe-item-author" href="{% url 'profile' recipe.user.id %}">{{ recipe.user }}</a>
+                        <span class="recipe-item-date">{{ recipe.date_time|date:"M j, Y" }}</span>
+                    </p>
+                    {% if recipe.user == request.user %}
+                        <span class="badge badge-secondary">Your recipe</span>
+                    {% else %}
+                        <form method="post" action="{% url 'save_recipe' recipe.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'cookbook' %}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Remove from cookbook</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </article>
+        {% empty %}
+            <p class="recipe-list-empty">Your cookbook is empty. Save recipes you love or write your own!</p>
+        {% endfor %}
+    </div>
+    {% include 'recipes/pagination.html' %}
+{% endblock %}

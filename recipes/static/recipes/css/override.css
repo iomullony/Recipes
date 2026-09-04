@@ -327,11 +327,6 @@
     text-decoration: none;
 }
 
-.recipe-item-author:hover {
-    color: #007bff;
-    text-decoration: underline;
-}
-
 .recipe-item-date {
     color: #888;
 }

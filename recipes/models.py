@@ -60,9 +60,16 @@ class Follow(models.Model):
     following = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers')
 
 
-class Liked(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='liked_posts')
-    post = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='likes')
+class SavedRecipe(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_recipes')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='saved_by')
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "recipe"], name="unique_user_recipe_saved")
+        ]
+        ordering = ["-saved_at"]
 
 
 class PantryItem(models.Model):
@@ -77,3 +84,4 @@ class PantryItem(models.Model):
             models.UniqueConstraint(fields=["user", "ingredient"], name="unique_user_ingredient_pantry")
         ]
         ordering = ["ingredient__name"]
+

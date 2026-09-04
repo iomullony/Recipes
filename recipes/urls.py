@@ -10,11 +10,13 @@ urlpatterns = [
     path("new_recipe/", views.new_recipe, name="new_recipe"),
     path("profile/<int:user_id>", views.profile, name="profile"),
     path("follow", views.follow, name="follow"),
+    path("cookbook/", views.cookbook, name="cookbook"),
     path("pantry/", views.pantry, name="pantry"),
     path("pantry/<int:item_id>/update/", views.pantry_update, name="pantry_update"),
     path("pantry/<int:item_id>/delete/", views.pantry_delete, name="pantry_delete"),
     path('recipe/<int:recipe_id>/', views.recipe, name='recipe'),
     path("recipe/<int:recipe_id>/edit/", views.edit_recipe, name="edit_recipe"),
     path("recipe/<int:recipe_id>/delete/", views.delete_recipe, name="delete_recipe"),
+    path("recipe/<int:recipe_id>/save/", views.save_recipe, name="save_recipe"),
     path("add_comment/<int:recipe_id>/", views.add_comment, name="add_comment"),
 ]
