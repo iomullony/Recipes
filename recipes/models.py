@@ -45,7 +45,8 @@ class Recipe(models.Model):
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    quantity = models.CharField(max_length=40, blank=True)
+    quantity = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    unit = models.CharField(max_length=20, blank=True)
 
 
 class Comment(models.Model):
@@ -82,6 +83,28 @@ class PantryItem(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["user", "ingredient"], name="unique_user_ingredient_pantry")
+        ]
+        ordering = ["ingredient__name"]
+
+
+class ShoppingNeed(models.Model):
+    """How much of an ingredient a given recipe still requires for a user's shopping list.
+
+    Kept per-recipe (rather than a single running total) so clicking "I want to cook
+    this" again for the same recipe overwrites its own contribution instead of piling
+    another copy of the requirement on top of it.
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="shopping_needs")
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name="shopping_needs")
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="shopping_needs")
+    quantity = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    unit = models.CharField(max_length=20, blank=True)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "ingredient", "recipe"], name="unique_user_ingredient_recipe_need")
         ]
         ordering = ["ingredient__name"]
 

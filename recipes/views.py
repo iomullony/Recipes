@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.db.models import Q
@@ -8,7 +10,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from .models import User, Category, Recipe, Ingredient, RecipeIngredient, Follow, Comment, PantryItem, SavedRecipe
+from .models import User, Category, Recipe, Ingredient, RecipeIngredient, Follow, Comment, PantryItem, SavedRecipe, ShoppingNeed
+from .units import unit_family_and_factor
 
 units = ['g', 'kg', 'mL', 'L', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'unit(s)']
 
@@ -184,20 +187,15 @@ def new_recipe(request):
             if not ingredient:
                 continue
             
-            # Build quantity string: number + unit (e.g. "2 cups", "100 g")
-            quantity = ""
             qty_val = ingredient_quantities[i].strip() if i < len(ingredient_quantities) else ""
             unit_val = ingredient_units[i].strip() if i < len(ingredient_units) else ""
-            if qty_val:
-                quantity = qty_val
-                if unit_val:
-                    quantity = f"{qty_val} {unit_val}"
-            
+
             # Create RecipeIngredient relationship
             RecipeIngredient.objects.create(
                 recipe=recipe,
                 ingredient=ingredient,
-                quantity=quantity
+                quantity=qty_val or None,
+                unit=unit_val,
             )
 
         return HttpResponseRedirect(reverse("index"))
@@ -221,9 +219,8 @@ def edit_recipe(request, recipe_id):
     ingredient_rows = [
         {
             "name": row.ingredient.name,
-            "quantity": row.quantity,
-            "unit": row.quantity.split()[-1] if row.quantity and " " in row.quantity else "",
-            "raw_quantity": row.quantity.split()[0] if row.quantity and " " in row.quantity else row.quantity,
+            "unit": row.unit,
+            "raw_quantity": row.quantity,
         }
         for row in existing_ingredients
     ]
@@ -307,14 +304,12 @@ def edit_recipe(request, recipe_id):
                 continue
             qty_val = ingredient_quantities[i].strip() if i < len(ingredient_quantities) else ""
             unit_val = ingredient_units[i].strip() if i < len(ingredient_units) else ""
-            quantity = qty_val if qty_val else ""
-            if qty_val and unit_val:
-                quantity = f"{qty_val} {unit_val}"
 
             RecipeIngredient.objects.create(
                 recipe=recipe,
                 ingredient=ingredient,
-                quantity=quantity,
+                quantity=qty_val or None,
+                unit=unit_val,
             )
 
         return redirect("recipe", recipe_id=recipe.id)
@@ -503,6 +498,108 @@ def cookbook(request):
     return render(request, "recipes/cookbook.html", {
         "page_obj": page_obj,
     })
+
+
+@login_required
+def add_to_shopping_list(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+
+    if request.method == "POST":
+        for ri in RecipeIngredient.objects.filter(recipe=recipe).select_related("ingredient"):
+            # update_or_create keyed on (user, ingredient, recipe) makes this idempotent:
+            # clicking "cook this" again for the same recipe overwrites its own requirement
+            # instead of adding another copy of it on top.
+            ShoppingNeed.objects.update_or_create(
+                user=request.user,
+                ingredient=ri.ingredient,
+                recipe=recipe,
+                defaults={"quantity": ri.quantity, "unit": ri.unit},
+            )
+
+        return redirect("shopping")
+
+    return redirect("recipe", recipe_id=recipe.id)
+
+
+@login_required
+def shopping(request):
+    needs = ShoppingNeed.objects.filter(user=request.user).select_related("ingredient", "recipe")
+    pantry_by_ingredient = {
+        item.ingredient_id: item
+        for item in PantryItem.objects.filter(user=request.user)
+    }
+
+    needs_by_ingredient = {}
+    for need in needs:
+        needs_by_ingredient.setdefault(need.ingredient_id, []).append(need)
+
+    shopping_list = []
+    for ingredient_id, ingredient_needs in needs_by_ingredient.items():
+        ingredient = ingredient_needs[0].ingredient
+        pantry_item = pantry_by_ingredient.get(ingredient_id)
+        recipes = [need.recipe for need in ingredient_needs]
+        specified_needs = [need for need in ingredient_needs if need.quantity is not None]
+
+        if not specified_needs:
+            # No recipe gave an amount for this ingredient - can't do math, just remind to buy it.
+            if pantry_item:
+                continue  # Already have some - assume that's covered.
+            shopping_list.append({
+                "ingredient": ingredient,
+                "quantity": None,
+                "unit": ingredient_needs[0].unit,
+                "have_quantity": None,
+                "total_needed": None,
+                "recipes": recipes,
+            })
+            continue
+
+        # Group needs by unit family (e.g. mass) so "500 g" and "0.5 kg" add up
+        # correctly instead of being treated as unrelated amounts.
+        families = {}
+        for need in specified_needs:
+            family, factor = unit_family_and_factor(need.unit)
+            group = families.setdefault(family, {"base_total": Decimal("0"), "display_unit": need.unit, "recipes": []})
+            group["base_total"] += need.quantity * factor
+            group["recipes"].append(need.recipe)
+
+        for family, group in families.items():
+            display_unit = group["display_unit"]
+            _, display_factor = unit_family_and_factor(display_unit)
+            total_needed_base = group["base_total"]
+
+            have_base = Decimal("0")
+            if pantry_item:
+                have_family, have_factor = unit_family_and_factor(pantry_item.unit)
+                if have_family == family:
+                    have_base = pantry_item.quantity * have_factor
+
+            buy_base = total_needed_base - have_base
+            if buy_base <= 0:
+                continue  # Fully covered by what's already in the pantry
+
+            shopping_list.append({
+                "ingredient": ingredient,
+                "quantity": buy_base / display_factor,
+                "unit": display_unit,
+                "have_quantity": have_base / display_factor,
+                "total_needed": total_needed_base / display_factor,
+                "recipes": group["recipes"],
+            })
+
+    shopping_list.sort(key=lambda row: row["ingredient"].name)
+
+    return render(request, "recipes/shopping.html", {
+        "shopping_list": shopping_list,
+    })
+
+
+@login_required
+def shopping_delete(request, ingredient_id):
+    if request.method == "POST":
+        ShoppingNeed.objects.filter(user=request.user, ingredient_id=ingredient_id).delete()
+
+    return redirect("shopping")
 
 
 @login_required

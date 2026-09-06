@@ -481,6 +481,13 @@
     margin-bottom: 8px;
 }
 
+.shopping-item-row {
+    display: grid;
+    grid-template-columns: minmax(130px, 1fr) 140px 1fr auto;
+    gap: 8px;
+    align-items: center;
+}
+
 /* Recipe detail */
 .recipe-page {
     display: flex;
@@ -595,6 +602,15 @@
     }
 
     .pantry-item-row .pantry-ingredient {
+        grid-column: 1 / -1;
+    }
+
+    .shopping-item-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .shopping-item-row .pantry-ingredient,
+    .shopping-item-row .shopping-item-source {
         grid-column: 1 / -1;
     }
 

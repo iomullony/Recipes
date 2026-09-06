@@ -1,0 +1,46 @@
+{% extends "recipes/layout.html" %}
+
+{% block body %}
+<h2 class="mb-4">Shopping List</h2>
+
+<div class="pantry-card">
+    {% if shopping_list %}
+        <div class="pantry-items">
+            {% for item in shopping_list %}
+                <div class="shopping-item-row">
+                    <div class="pantry-ingredient">{{ item.ingredient.name }}</div>
+                    <div class="shopping-item-qty">
+                        {% if item.quantity %}
+                            Buy {{ item.quantity|floatformat:"-2" }} {{ item.unit }}
+                        {% else %}
+                            <span class="text-muted">Amount not specified</span>
+                        {% endif %}
+                    </div>
+                    <div class="shopping-item-source">
+                        {% if item.total_needed %}
+                            <small class="text-muted">
+                                Need {{ item.total_needed|floatformat:"-2" }} {{ item.unit }},
+                                have {{ item.have_quantity|default:0|floatformat:"-2" }} {{ item.unit }}
+                            </small>
+                        {% endif %}
+                        {% if item.recipes %}
+                            <small class="text-muted d-block">
+                                For
+                                {% for recipe in item.recipes %}
+                                    <a href="{% url 'recipe' recipe.id %}">{{ recipe.title }}</a>{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </small>
+                        {% endif %}
+                    </div>
+                    <form method="post" action="{% url 'shopping_delete' item.ingredient.id %}">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-primary btn-sm" type="submit">Got it</button>
+                    </form>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="mb-0">Your shopping list is empty. Visit a recipe and click "I want to cook this" to see what you're missing.</p>
+    {% endif %}
+</div>
+{% endblock %}

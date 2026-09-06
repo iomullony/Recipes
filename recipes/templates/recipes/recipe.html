@@ -28,6 +28,12 @@
                         {% endif %}
                     </form>
                 {% endif %}
+                {% if request.user.is_authenticated %}
+                    <form method="post" action="{% url 'add_to_shopping_list' recipe.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-success btn-sm mt-2">I want to cook this</button>
+                    </form>
+                {% endif %}
             </div>
         </header>
 
@@ -45,7 +51,7 @@
                         <li>
                             <span>{{ item.ingredient.name }}</span>
                             {% if item.quantity %}
-                                <small>{{ item.quantity }}</small>
+                                <small>{{ item.quantity|floatformat:"-2" }} {{ item.unit }}</small>
                             {% endif %}
                         </li>
                     {% empty %}
