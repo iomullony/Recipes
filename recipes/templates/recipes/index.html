@@ -3,6 +3,18 @@
 
 {% block body %}
     <h2>Explore new recipes</h2>
+    <form method="get" class="mb-4" role="search">
+        <label for="recipe-search" class="sr-only">Search recipes</label>
+        <div class="input-group">
+            <input id="recipe-search" type="search" name="q" value="{{ query }}" class="form-control" placeholder="Search by recipe, category, or ingredient">
+            <div class="input-group-append">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </div>
+    </form>
+    {% if query %}
+        <p class="text-muted">Results for "{{ query }}"</p>
+    {% endif %}
     {% include 'recipes/recipes.html' %}
     {% include 'recipes/pagination.html' %}
     {% if user.is_authenticated %}

@@ -45,17 +45,27 @@ def get_or_create_category_ci(name):
 
 
 def index(request):
+    query = request.GET.get("q", "").strip()
     recipes = (
         Recipe.objects.select_related("user")
         .order_by("-id")
     )
+
+    if query:
+        recipes = recipes.filter(
+            Q(title__icontains=query)
+            | Q(categories__name__icontains=query)
+            | Q(ingredients__name__icontains=query)
+        ).distinct()
     
     paginator = Paginator(recipes, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, "recipes/index.html", {
-        "page_obj": page_obj
+        "page_obj": page_obj,
+        "query": query,
+        "pagination_query": request.GET.copy(),
     })
 
 
@@ -484,6 +494,7 @@ def save_recipe(request, recipe_id):
 
 @login_required
 def cookbook(request):
+    query = request.GET.get("q", "").strip()
     recipes = (
         Recipe.objects.filter(Q(user=request.user) | Q(saved_by__user=request.user))
         .select_related("user")
@@ -491,12 +502,21 @@ def cookbook(request):
         .order_by("-id")
     )
 
+    if query:
+        recipes = recipes.filter(
+            Q(title__icontains=query)
+            | Q(categories__name__icontains=query)
+            | Q(ingredients__name__icontains=query)
+        ).distinct()
+
     paginator = Paginator(recipes, 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
     return render(request, "recipes/cookbook.html", {
         "page_obj": page_obj,
+        "query": query,
+        "pagination_query": request.GET.copy(),
     })
 
 
