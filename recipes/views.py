@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.db.models import Q
+from django.db.models import Avg, Count, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from .models import User, Category, Recipe, Ingredient, RecipeIngredient, Follow, Comment, PantryItem, SavedRecipe, ShoppingNeed
+from .models import User, Category, Recipe, Ingredient, RecipeIngredient, Follow, Comment, PantryItem, SavedRecipe, ShoppingNeed, Rating
 from .units import unit_family_and_factor
 
 units = ['g', 'kg', 'mL', 'L', 'cups', 'tbsp', 'tsp', 'oz', 'lb', 'unit(s)']
@@ -467,12 +467,39 @@ def recipe(request, recipe_id):
     if request.user.is_authenticated and request.user != recipe.user:
         is_saved = SavedRecipe.objects.filter(user=request.user, recipe=recipe).exists()
 
+    rating_summary = recipe.ratings.aggregate(average=Avg("score"), count=Count("id"))
+    user_rating = None
+    if request.user.is_authenticated:
+        user_rating = recipe.ratings.filter(user=request.user).values_list("score", flat=True).first()
+
     return render(request, 'recipes/recipe.html', {
         'recipe': recipe,
         'ingredients': ingredients,
         'comments': comments,
         'is_saved': is_saved,
+        'rating_average': rating_summary['average'],
+        'rating_count': rating_summary['count'],
+        'user_rating': user_rating,
     })
+
+
+@login_required
+def rate_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, id=recipe_id)
+    if request.method == "POST":
+        try:
+            score = int(request.POST.get("score", ""))
+        except (TypeError, ValueError):
+            score = 0
+
+        if 1 <= score <= 5:
+            Rating.objects.update_or_create(
+                user=request.user,
+                recipe=recipe,
+                defaults={"score": score},
+            )
+
+    return redirect("recipe", recipe_id=recipe.id)
 
 
 @login_required

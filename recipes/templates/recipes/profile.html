@@ -20,7 +20,7 @@
         {% elif request.user == user and request.user.is_authenticated %}
             <form method="post" action="#" class="follow-form">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-primary">Edit</button>
+                <!-- <button type="submit" class="btn btn-primary">Edit</button> -->
                 <a class="btn btn-primary" href="{% url 'logout' %}">Log Out</a>
             </form>
         {% endif %}

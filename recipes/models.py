@@ -73,6 +73,17 @@ class SavedRecipe(models.Model):
         ordering = ["-saved_at"]
 
 
+class Rating(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="ratings")
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name="ratings")
+    score = models.PositiveSmallIntegerField()
+    date_time = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "recipe"], name="unique_user_recipe_rating")
+        ]
+
 class PantryItem(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="pantry_items")
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name="pantry_items")

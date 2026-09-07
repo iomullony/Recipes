@@ -53,6 +53,7 @@
                             {% if item.quantity %}
                                 <small>{{ item.quantity|floatformat:"-2" }} {{ item.unit }}</small>
                             {% endif %}
+
                         </li>
                     {% empty %}
                         <li><span>No ingredients listed.</span></li>
@@ -72,13 +73,37 @@
 
             <section class="recipe-card">
                 <h4>Ratings</h4>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
-                <span class="fa fa-star checked"></span>
-                <span class="fa fa-star checked"></span>
-                <span class="fa fa-star checked"></span>
-                <span class="fa fa-star"></span>
-                <span class="fa fa-star"></span>
+                {% if rating_count %}
+                    <p class="rating-summary">
+                        <strong>{{ rating_average|floatformat:"1" }} / 5</strong>
+                        <span aria-label="{{ rating_average|floatformat:"1" }} out of 5 stars">
+                            {% for star in "12345" %}
+                                {% if forloop.counter <= rating_average %}&#9733;{% else %}&#9734;{% endif %}
+                            {% endfor %}
+                        </span>
+                        <small>({{ rating_count }} rating{{ rating_count|pluralize }})</small>
+                    </p>
+                {% else %}
+                    <p class="text-muted">No ratings yet.</p>
+                {% endif %}
+                {% if request.user.is_authenticated %}
+                    <form method="post" action="{% url 'rate_recipe' recipe.id %}" class="rating-form">
+                        {% csrf_token %}
+                        <fieldset class="rating-input">
+                            <legend>{% if user_rating %}Change your rating{% else %}Rate this recipe{% endif %}</legend>
+                            {% for score in "12345" %}
+                                <input type="radio" id="rating-{{ forloop.counter }}" name="score" value="{{ forloop.counter }}" {% if user_rating == forloop.counter %}checked{% endif %} required>
+                                <label for="rating-{{ forloop.counter }}" title="{{ forloop.counter }} star{{ forloop.counter|pluralize }}">
+                                    <span aria-hidden="true">&#9733;</span>
+                                    <span class="sr-only">{{ forloop.counter }} star{{ forloop.counter|pluralize }}</span>
+                                </label>
+                            {% endfor %}
+                        </fieldset>
+                        <button type="submit" class="btn btn-primary">Submit rating</button>
+                    </form>
+                {% else %}
+                    <p class="text-muted">Log in to rate this recipe.</p>
+                {% endif %}
             </section>
 
             <section class="recipe-card">
