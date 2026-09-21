@@ -57,7 +57,7 @@ def index(request):
             | Q(categories__name__icontains=query)
             | Q(ingredients__name__icontains=query)
         ).distinct()
-    
+
     paginator = Paginator(recipes, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -71,13 +71,9 @@ def index(request):
 
 def login_view(request):
     if request.method == "POST":
-
-        # Attempt to sign user in
         username = request.POST["username"]
         password = request.POST["password"]
         user = authenticate(request, username=username, password=password)
-
-        # Check if authentication successful
         if user is not None:
             login(request, user)
             return HttpResponseRedirect(reverse("index"))
@@ -98,16 +94,12 @@ def register(request):
     if request.method == "POST":
         username = request.POST["username"]
         email = request.POST["email"]
-
-        # Ensure password matches confirmation
         password = request.POST["password"]
         confirmation = request.POST["confirmation"]
         if password != confirmation:
             return render(request, "recipes/register.html", {
                 "message": "Passwords must match."
             })
-
-        # Attempt to create new user
         try:
             user = User.objects.create_user(username, email, password)
             user.save()
@@ -119,7 +111,7 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "recipes/register.html")
-    
+
 
 @login_required
 def new_recipe(request):
@@ -132,9 +124,7 @@ def new_recipe(request):
         ingredient_quantities = request.POST.getlist('ingredient_qty')
         ingredient_units = request.POST.getlist('ingredient_unit')
         photo = request.FILES.get("photo")
-        max_image_bytes = 2 * 1024 * 1024  # 2 MB limit to match front-end check
-
-        # Validate required fields - ensure they're not just whitespace
+        max_image_bytes = 2 * 1024 * 1024
         if not title or not title.strip():
             categories = Category.objects.all()
             return render(request, "recipes/new_recipe.html", {
@@ -142,7 +132,7 @@ def new_recipe(request):
                 "units": units,
                 "error": "Title is required."
             })
-        
+
         if not preparation or not preparation.strip():
             categories = Category.objects.all()
             return render(request, "recipes/new_recipe.html", {
@@ -150,8 +140,6 @@ def new_recipe(request):
                 "units": units,
                 "error": "Preparation instructions are required."
             })
-
-        # Validate image size if provided
         if photo and photo.size > max_image_bytes:
             categories = Category.objects.all()
             return render(request, "recipes/new_recipe.html", {
@@ -159,8 +147,6 @@ def new_recipe(request):
                 "units": units,
                 "error": "Image must be smaller than 2 MB. Please choose a smaller file."
             })
-
-        # Create the recipe
         recipe = Recipe.objects.create(
             user=request.user,
             title=title,
@@ -179,28 +165,20 @@ def new_recipe(request):
                 except Category.DoesNotExist:
                     pass
             else:
-                # New category created via Tom Select
                 category, _ = get_or_create_category_ci(value)
                 if not category:
                     continue
                 recipe.categories.add(category)
-
-        # Handle ingredients
-        # Match ingredient names with their quantities by index
         for i, ingredient_name in enumerate(ingredient_names):
             ingredient_name = ingredient_name.strip()
             if not ingredient_name:
                 continue
-            
-            # Get or create the ingredient
             ingredient, _ = get_or_create_ingredient_ci(ingredient_name)
             if not ingredient:
                 continue
-            
+
             qty_val = ingredient_quantities[i].strip() if i < len(ingredient_quantities) else ""
             unit_val = ingredient_units[i].strip() if i < len(ingredient_units) else ""
-
-            # Create RecipeIngredient relationship
             RecipeIngredient.objects.create(
                 recipe=recipe,
                 ingredient=ingredient,
@@ -336,20 +314,16 @@ def edit_recipe(request, recipe_id):
 def profile(request, user_id):
     user = get_object_or_404(User, id=user_id)
     recipes = Recipe.objects.filter(user=user)
-
-    # Paginate
     paginator = Paginator(recipes, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
-    # Check if current user follows this user
     is_following = False
     if request.user.is_authenticated and request.user != user:
         is_following = Follow.objects.filter(
             follower=request.user,
             following=user
         ).exists()
-    
+
     return render(request, "recipes/profile.html", {
         "user": user,
         "is_following": is_following,
@@ -363,29 +337,23 @@ def follow(request):
     if request.method == "POST":
         user_id = request.POST.get('id')
         target_user = get_object_or_404(User, id=user_id)
-        
-        # Prevent following yourself
         if request.user == target_user:
             return redirect('profile', user_id=user_id)
-        
-        # Check if already following
         follow_obj = Follow.objects.filter(
             follower=request.user,
             following=target_user
         ).first()
-        
+
         if follow_obj:
-            # Unfollow
             follow_obj.delete()
         else:
-            # Follow
             Follow.objects.create(
                 follower=request.user,
                 following=target_user
             )
-        
+
         return redirect('profile', user_id=user_id)
-    
+
     return redirect('index')
 
 
@@ -553,9 +521,6 @@ def add_to_shopping_list(request, recipe_id):
 
     if request.method == "POST":
         for ri in RecipeIngredient.objects.filter(recipe=recipe).select_related("ingredient"):
-            # update_or_create keyed on (user, ingredient, recipe) makes this idempotent:
-            # clicking "cook this" again for the same recipe overwrites its own requirement
-            # instead of adding another copy of it on top.
             ShoppingNeed.objects.update_or_create(
                 user=request.user,
                 ingredient=ri.ingredient,
@@ -665,16 +630,16 @@ def delete_recipe(request, recipe_id):
 @login_required
 def add_comment(request, recipe_id):
     if request.method == "POST":
-        
+
         comment = request.POST.get('comment')
         item = Recipe.objects.get(id=recipe_id)
-        
+
         Comment.objects.create(
             user=request.user,
             item=item,
             comment=comment
-        )    
-    
+        )
+
         return redirect('recipe', recipe_id=recipe_id)
     else:
         return redirect('index')
